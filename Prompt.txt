@@ -1,0 +1,606 @@
+You are a Principal Software Architect, Senior DevOps Engineer, Full Stack Engineer, and Technical Documentation Expert.
+
+Your responsibility is to act as a senior engineering team and complete this project end-to-end.
+
+DO NOT generate everything at once.
+
+Work incrementally exactly like a real software engineering team.
+
+===========================================================
+PROJECT
+===========================================================
+
+Project Name
+
+CI/CD Pipeline Health Dashboard
+
+Goal
+
+Develop a production-quality web application that monitors CI/CD pipeline executions from GitHub Actions (preferred) or Jenkins.
+
+The application should collect build information using APIs, store the data, visualize metrics, provide alerts, and be fully containerized.
+
+===========================================================
+ASSIGNMENT REQUIREMENTS
+===========================================================
+
+The dashboard must
+
+• Collect pipeline execution information
+    - Build Number
+    - Pipeline Name
+    - Status
+    - Success/Failure
+    - Duration
+    - Branch
+    - Commit ID
+    - Commit Message
+    - Triggered By
+    - Started Time
+    - Completed Time
+
+• Show real-time metrics
+
+    - Success Rate
+    - Failure Rate
+    - Average Build Time
+    - Last Build Status
+    - Total Builds
+    - Recent Builds
+
+• Display
+
+    - Latest builds
+    - Build history
+    - Logs
+    - Pipeline status
+
+• Send Email alerts when pipeline fails
+
+• Provide a simple frontend dashboard
+
+===========================================================
+TECH STACK
+===========================================================
+
+Backend
+
+Python 3.12
+
+FastAPI
+
+SQLAlchemy
+
+Pydantic
+
+SQLite
+
+Requests
+
+SMTP
+
+python-dotenv
+
+Frontend
+
+React
+
+Axios
+
+Bootstrap
+
+Chart.js
+
+React Router
+
+Database
+
+SQLite
+
+Deployment
+
+Docker
+
+Docker Compose
+
+Source Control
+
+GitHub
+
+CI Source
+
+GitHub Actions API
+
+===========================================================
+CODING STANDARDS
+===========================================================
+
+Use
+
+Clean Architecture
+
+SOLID Principles
+
+Proper Folder Structure
+
+Environment Variables
+
+Type Hints
+
+Reusable Components
+
+Exception Handling
+
+Logging
+
+Configuration Files
+
+Comments only where necessary
+
+Follow PEP8
+
+REST API Best Practices
+
+===========================================================
+PROJECT STRUCTURE
+===========================================================
+
+Create
+
+ci-cd-dashboard
+
+    backend/
+
+    frontend/
+
+    docs/
+
+    docker/
+
+    .github/
+
+    README.md
+
+    docker-compose.yml
+
+===========================================================
+BACKEND STRUCTURE
+===========================================================
+
+backend/
+
+app/
+
+main.py
+
+database.py
+
+models.py
+
+schemas.py
+
+config.py
+
+api/
+
+services/
+
+utils/
+
+mail/
+
+requirements.txt
+
+Dockerfile
+
+===========================================================
+FRONTEND STRUCTURE
+===========================================================
+
+frontend/
+
+src/
+
+components/
+
+pages/
+
+services/
+
+hooks/
+
+styles/
+
+App.jsx
+
+package.json
+
+Dockerfile
+
+===========================================================
+DATABASE
+===========================================================
+
+Design a normalized database schema.
+
+Minimum table
+
+Builds
+
+Include
+
+id
+
+pipeline_name
+
+build_number
+
+workflow_name
+
+status
+
+duration
+
+branch
+
+commit_id
+
+commit_message
+
+author
+
+started_at
+
+completed_at
+
+logs
+
+created_at
+
+===========================================================
+BACKEND FEATURES
+===========================================================
+
+Implement
+
+GitHub API integration
+
+Database CRUD
+
+Metrics calculation
+
+Email notification
+
+Logging
+
+REST APIs
+
+Background refresh
+
+===========================================================
+API ENDPOINTS
+===========================================================
+
+Create production-quality APIs.
+
+Example
+
+GET /api/dashboard
+
+GET /api/builds
+
+GET /api/builds/{id}
+
+GET /api/builds/{id}/logs
+
+POST /api/refresh
+
+GET /health
+
+Return proper JSON responses.
+
+===========================================================
+FRONTEND
+===========================================================
+
+Create a responsive dashboard.
+
+Dashboard cards
+
+Success Rate
+
+Failure Rate
+
+Average Build Time
+
+Last Build Status
+
+Total Builds
+
+Charts
+
+Pie Chart
+
+Bar Chart
+
+Recent Builds Table
+
+Logs Viewer
+
+Loading States
+
+Error Handling
+
+Responsive Layout
+
+===========================================================
+EMAIL ALERT
+===========================================================
+
+Whenever a pipeline fails
+
+Send an email containing
+
+Pipeline Name
+
+Build Number
+
+Branch
+
+Duration
+
+Failure Status
+
+Logs Link
+
+===========================================================
+DOCKER
+===========================================================
+
+Create
+
+Backend Dockerfile
+
+Frontend Dockerfile
+
+docker-compose.yml
+
+Application should start using
+
+docker compose up --build
+
+===========================================================
+DOCUMENTATION
+===========================================================
+
+Generate
+
+README.md
+
+Include
+
+Project Overview
+
+Architecture
+
+Technology Stack
+
+Installation
+
+Docker
+
+API Documentation
+
+Environment Variables
+
+Screenshots Placeholder
+
+Future Enhancements
+
+===========================================================
+PROMPT LOG
+===========================================================
+
+Create
+
+prompt_logs.md
+
+Record every major AI prompt used during development.
+
+===========================================================
+REQUIREMENT ANALYSIS DOCUMENT
+===========================================================
+
+Create
+
+requirement_analysis_document.md
+
+Include
+
+Problem Statement
+
+Objectives
+
+Functional Requirements
+
+Non-functional Requirements
+
+Stakeholders
+
+Assumptions
+
+Risks
+
+Technology Choices
+
+API Analysis
+
+Database Analysis
+
+UI Analysis
+
+===========================================================
+TECH DESIGN DOCUMENT
+===========================================================
+
+Create
+
+tech_design_document.md
+
+Include
+
+Architecture Diagram (Mermaid)
+
+Component Diagram
+
+Sequence Diagram
+
+Database ER Diagram
+
+API Design
+
+Folder Structure
+
+Deployment Architecture
+
+Security Considerations
+
+Future Improvements
+
+===========================================================
+README
+===========================================================
+
+Explain
+
+How to run locally
+
+How Docker works
+
+How GitHub API works
+
+How Email Alerts work
+
+How Metrics are calculated
+
+===========================================================
+GITHUB API
+===========================================================
+
+Use GitHub REST API.
+
+Read workflow runs.
+
+Use Personal Access Token stored inside .env.
+
+Never hardcode secrets.
+
+===========================================================
+SECURITY
+===========================================================
+
+Never hardcode credentials.
+
+Use .env
+
+Validate inputs
+
+Handle API failures
+
+Gracefully recover from errors.
+
+===========================================================
+DEVELOPMENT PROCESS
+===========================================================
+
+IMPORTANT
+
+Do NOT generate the entire project immediately.
+
+Instead work exactly like a senior engineer.
+
+For every phase
+
+1. Explain what will be built.
+
+2. Explain why.
+
+3. Generate code.
+
+4. Explain folder structure.
+
+5. Explain testing.
+
+6. Wait until that phase is complete before continuing.
+
+===========================================================
+PHASES
+===========================================================
+
+Phase 1
+
+Requirement Analysis
+
+Phase 2
+
+Architecture Design
+
+Phase 3
+
+Backend Setup
+
+Phase 4
+
+Database
+
+Phase 5
+
+GitHub API Integration
+
+Phase 6
+
+Metrics Engine
+
+Phase 7
+
+Frontend
+
+Phase 8
+
+Charts
+
+Phase 9
+
+Email Alerts
+
+Phase 10
+
+Docker
+
+Phase 11
+
+Testing
+
+Phase 12
+
+Documentation
+
+Phase 13
+
+Repository Cleanup
+
+Phase 14
+
+Final Review
+
+===========================================================
+QUALITY EXPECTATION
+===========================================================
+
+The final project should look like a production-ready GitHub repository created by an experienced software engineer.
+
+Do not use placeholder code unless absolutely necessary.
+
+Every file should be complete, runnable, properly documented, and production oriented.
+
+Begin with Phase 1 only.
