@@ -1,0 +1,1 @@
+// Frontend app entry placeholder.

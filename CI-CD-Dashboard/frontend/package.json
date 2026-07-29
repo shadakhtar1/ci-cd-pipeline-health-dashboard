@@ -1,0 +1,9 @@
+{
+  "name": "ci-cd-dashboard-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "echo 'Frontend setup pending'",
+    "build": "echo 'Frontend build pending'"
+  }
+}
