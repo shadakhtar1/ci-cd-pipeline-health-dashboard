@@ -35,6 +35,21 @@ GITHUB_REPO=hello-world
 4. Copy .env.example to .env and update the values.
 5. Run the application with uvicorn.
 
+## Metrics Engine
+The dashboard metrics endpoint exposes the following values via GET /api/dashboard:
+
+- success rate
+- failure rate
+- average build duration
+- last build status
+- total builds
+- successful builds
+- failed builds
+- running builds
+- last refresh time
+
+The calculations are centralized in the reusable metrics service and use the Build table as the source of truth.
+
 ## Notes
 - The GitHub integration is intentionally isolated in the backend service layer.
 - The application uses SQLite for local persistence.
