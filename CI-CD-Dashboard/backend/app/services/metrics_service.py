@@ -34,7 +34,11 @@ class MetricsService:
     def calculate_last_build_status(builds: Sequence[Build]) -> str | None:
         if not builds:
             return None
-        return builds[0].status
+        latest_build = max(
+            builds,
+            key=lambda build: (build.updated_at or build.created_at or datetime.min.replace(tzinfo=timezone.utc)),
+        )
+        return latest_build.status
 
     @staticmethod
     def calculate_total_builds(builds: Sequence[Build]) -> int:

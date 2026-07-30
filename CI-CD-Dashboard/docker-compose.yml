@@ -4,17 +4,54 @@ services:
   backend:
     build:
       context: ./backend
-    ports:
-      - "8000:8000"
+      dockerfile: Dockerfile
+    container_name: ci-cd-backend
+    restart: unless-stopped
     env_file:
-      - .env
+      - ./backend/.env
     environment:
       PYTHONUNBUFFERED: "1"
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    networks:
+      - ci-cd-network
+    volumes:
+      - ci-cd-sqlite:/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ci-cd-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      VITE_API_BASE_URL: http://backend:8000
     ports:
       - "3000:3000"
-    depends_on:
-      - backend
+    networks:
+      - ci-cd-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  ci-cd-network:
+    name: ci-cd-network
+    driver: bridge
+
+volumes:
+  ci-cd-sqlite:
+    name: ci-cd-sqlite

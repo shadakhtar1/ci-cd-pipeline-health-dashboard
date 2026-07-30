@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     smtp_password: str | None = None
     from_email: str | None = None
     to_email: str | None = None
+    smtp_recipients: str | None = None
+    email_alerts_enabled: bool = True
 
     model_config = SettingsConfigDict(
         env_file=None,

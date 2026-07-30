@@ -23,18 +23,20 @@ class GitHubService:
         self.token = settings.github_token or ""
         self.owner = settings.github_owner or ""
         self.repo = settings.github_repo or ""
+        self.last_sync_stats: dict[str, Any] | None = None
 
     def _build_headers(self) -> dict[str, str]:
-        return {
+        headers = {
             "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {self.token}",
             "X-GitHub-Api-Version": "2022-11-28",
         }
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        return headers
 
     def _request(self, url: str, *, params: dict[str, Any] | None = None, retries: int = 3) -> dict[str, Any]:
         if not self.token:
-            logger.error("GitHub token is missing")
-            raise ValueError("GitHub token is not configured")
+            logger.warning("GitHub token is missing; continuing without authentication")
 
         last_error: Exception | None = None
         for attempt in range(retries):
@@ -103,13 +105,18 @@ class GitHubService:
         if isinstance(head_commit.get("author"), dict):
             author_name = head_commit["author"].get("name")
 
+        duration_ms = run.get("run_duration_ms")
+        duration = None
+        if isinstance(duration_ms, (int, float)) and duration_ms is not None:
+            duration = int(duration_ms / 1000)
+
         return {
             "id": run.get("id"),
             "pipeline_name": run.get("name") or run.get("head_branch") or "unknown",
             "build_number": run.get("run_number"),
             "workflow_name": run.get("name"),
             "status": (run.get("conclusion") or run.get("status") or "unknown").lower(),
-            "duration": None,
+            "duration": duration,
             "branch": run.get("head_branch"),
             "commit_id": run.get("head_sha"),
             "commit_message": head_commit.get("message"),
@@ -117,9 +124,10 @@ class GitHubService:
             "started_at": started_at,
             "completed_at": completed_at,
             "logs_url": run.get("logs_url"),
+            "build_url": run.get("html_url"),
         }
 
-    def sync_workflow_runs_to_db(self, db: Session, *, owner: str | None = None, repo: str | None = None, per_page: int = 10, max_pages: int = 1) -> dict[str, int]:
+    def sync_workflow_runs_to_db(self, db: Session, *, owner: str | None = None, repo: str | None = None, per_page: int = 10, max_pages: int = 1) -> int:
         owner = owner or self.owner
         repo = repo or self.repo
         if not owner or not repo:
@@ -130,10 +138,13 @@ class GitHubService:
         inserted = 0
         updated = 0
         skipped = 0
+        failed_builds: list[dict[str, Any]] = []
 
         for run in runs:
             parsed = self.parse_run(run)
             existing = db.query(Build).filter(Build.build_number == parsed["build_number"]).first()
+            should_notify_failure = False
+
             if existing is None:
                 build = Build(
                     pipeline_name=parsed["pipeline_name"],
@@ -151,7 +162,9 @@ class GitHubService:
                 )
                 db.add(build)
                 inserted += 1
+                should_notify_failure = parsed["status"] == "failure"
             else:
+                previous_status = existing.status
                 existing.pipeline_name = parsed["pipeline_name"]
                 existing.workflow_name = parsed["workflow_name"]
                 existing.status = parsed["status"]
@@ -164,13 +177,23 @@ class GitHubService:
                 existing.completed_at = parsed["completed_at"]
                 existing.logs = parsed.get("logs_url")
                 updated += 1
+                should_notify_failure = previous_status != "failure" and parsed["status"] == "failure"
+
+            if should_notify_failure:
+                failed_builds.append(parsed)
 
         db.commit()
+        self.last_sync_stats = {
+            "inserted": inserted,
+            "updated": updated,
+            "skipped": skipped,
+            "failed_builds": failed_builds,
+        }
         logger.info(
             "Synced workflow runs to database",
             extra={"inserted": inserted, "updated": updated, "skipped": skipped},
         )
-        return {"inserted": inserted, "updated": updated, "skipped": skipped}
+        return inserted + updated
 
     @staticmethod
     def _parse_datetime(value: Any) -> datetime | None:
