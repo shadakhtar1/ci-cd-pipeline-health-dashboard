@@ -72,11 +72,20 @@ def test_send_failure_alert_retries_after_transient_smtp_error():
             duration=320,
             build_url="https://ci.example/builds/42",
             timestamp=datetime(2026, 7, 31, 12, 0, 0),
+            repository="octo/demo",
+            workflow_name="deploy",
+            started_at=datetime(2026, 7, 31, 11, 0, 0),
         )
 
     assert result is True
     assert len(smtp_instances) == 2
     assert smtp_instances[-1].calls == 1
+    sent_message = smtp_instances[-1].sent_messages[0]
+    assert sent_message["Subject"] == "CI/CD Alert: Workflow Failed"
+    html_payload = sent_message.get_payload()[1].get_payload()
+    assert "Workflow Name" in html_payload
+    assert "Repository" in html_payload
+    assert "Started Time" in html_payload
 
 
 def test_send_failure_alert_uses_html_template_and_recipients():
@@ -101,6 +110,9 @@ def test_send_failure_alert_uses_html_template_and_recipients():
             duration=180,
             build_url="https://ci.example/builds/7",
             timestamp=datetime(2026, 7, 31, 12, 30, 0),
+            repository="octo/demo",
+            workflow_name="build",
+            started_at=datetime(2026, 7, 31, 12, 0, 0),
         )
 
     assert result is True

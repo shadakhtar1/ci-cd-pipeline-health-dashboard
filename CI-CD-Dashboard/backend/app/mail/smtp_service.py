@@ -40,16 +40,19 @@ class SMTPEmailService:
         duration: int | None,
         build_url: str | None,
         timestamp: datetime | None,
+        repository: str | None = None,
+        workflow_name: str | None = None,
+        started_at: datetime | None = None,
     ) -> bool:
         if not self.email_alerts_enabled:
-            logger.info("Email alerts are disabled")
+            logger.info("Email alerts disabled", extra={"workflow": workflow_name or pipeline_name})
             return False
 
         if not self.recipients:
-            logger.warning("Email recipient is not configured")
+            logger.warning("Email recipient is not configured", extra={"workflow": workflow_name or pipeline_name})
             return False
 
-        subject = f"CI/CD Failure Alert: {pipeline_name} #{build_number}"
+        subject = "CI/CD Alert: Workflow Failed"
         html_body = self._build_html_body(
             pipeline_name=pipeline_name,
             build_number=build_number,
@@ -59,6 +62,9 @@ class SMTPEmailService:
             duration=duration,
             build_url=build_url,
             timestamp=timestamp,
+            repository=repository,
+            workflow_name=workflow_name,
+            started_at=started_at,
         )
 
         message = EmailMessage()
@@ -77,7 +83,8 @@ class SMTPEmailService:
                         smtp.login(self.smtp_username, self.smtp_password)
                     smtp.send_message(message)
                 logger.info(
-                    "Failure alert email sent",
+                    "Email alert sent for workflow %s",
+                    workflow_name or pipeline_name,
                     extra={
                         "pipeline_name": pipeline_name,
                         "build_number": build_number,
@@ -88,7 +95,8 @@ class SMTPEmailService:
             except (smtplib.SMTPException, TimeoutError, OSError, ConnectionError) as exc:
                 last_error = exc
                 logger.warning(
-                    "Temporary SMTP failure while sending alert, retrying",
+                    "SMTP failed for workflow %s, retrying",
+                    workflow_name or pipeline_name,
                     extra={
                         "pipeline_name": pipeline_name,
                         "build_number": build_number,
@@ -100,10 +108,38 @@ class SMTPEmailService:
                     time.sleep(self.retry_delay_seconds * (attempt + 1))
 
         logger.exception(
-            "Failed to send email alert after retries",
+            "SMTP failed for workflow %s after retries",
+            workflow_name or pipeline_name,
             extra={"pipeline_name": pipeline_name, "build_number": build_number, "error": str(last_error)},
         )
         return False
+
+    def send_test_email(self) -> bool:
+        if not self.email_alerts_enabled:
+            logger.info("Email alerts disabled for test email")
+            return False
+
+        if not self.recipients:
+            logger.warning("Email recipient is not configured for test email")
+            return False
+
+        message = EmailMessage()
+        message["Subject"] = "Test Email from CI/CD Dashboard"
+        message["From"] = self.from_email
+        message["To"] = ", ".join(self.recipients)
+        message.set_content("This confirms Gmail SMTP is configured correctly.")
+
+        try:
+            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=10) as smtp:
+                if self.smtp_username and self.smtp_password:
+                    smtp.starttls()
+                    smtp.login(self.smtp_username, self.smtp_password)
+                smtp.send_message(message)
+            logger.info("Test email sent successfully")
+            return True
+        except (smtplib.SMTPException, TimeoutError, OSError, ConnectionError) as exc:
+            logger.exception("Test email failed", extra={"error": str(exc)})
+            raise
 
     def _build_recipients(self) -> list[str]:
         recipients = [item.strip() for item in self.smtp_recipients.split(",") if item.strip()]
@@ -122,26 +158,30 @@ class SMTPEmailService:
         duration: int | None,
         build_url: str | None,
         timestamp: datetime | None,
+        repository: str | None = None,
+        workflow_name: str | None = None,
+        started_at: datetime | None = None,
     ) -> str:
         branch_text = escape(branch or "unknown")
         commit_text = escape(commit_sha or "n/a")
         status_text = escape((status or "failure").upper())
         duration_text = escape(f"{duration}s" if duration is not None else "n/a")
         build_url_text = escape(build_url or "Not available")
-        timestamp_text = escape((timestamp or datetime.utcnow()).strftime("%Y-%m-%d %H:%M:%S UTC"))
+        started_time_text = escape((started_at or timestamp or datetime.utcnow()).strftime("%Y-%m-%d %H:%M:%S UTC"))
+        workflow_text = escape(workflow_name or pipeline_name)
+        repository_text = escape(repository or "unknown")
         return f"""
         <html>
           <body style="font-family: Arial, sans-serif; color: #222; line-height: 1.5;">
-            <h2 style="color: #b42318;">Pipeline Failure Alert</h2>
-            <p>The pipeline <strong>{escape(pipeline_name)}</strong> reported a failed build <strong>#{build_number}</strong>.</p>
+            <h2 style="color: #b42318;">CI/CD Alert: Workflow Failed</h2>
+            <p>The workflow <strong>{workflow_text}</strong> reported a failed run <strong>#{build_number}</strong>.</p>
             <ul>
-              <li><strong>Workflow:</strong> {escape(pipeline_name)}</li>
+              <li><strong>Workflow Name:</strong> {workflow_text}</li>
+              <li><strong>Repository:</strong> {repository_text}</li>
               <li><strong>Branch:</strong> {branch_text}</li>
-              <li><strong>Commit SHA:</strong> {commit_text}</li>
               <li><strong>Status:</strong> {status_text}</li>
-              <li><strong>Duration:</strong> {duration_text}</li>
-              <li><strong>Build URL:</strong> <a href="{build_url_text}">{build_url_text}</a></li>
-              <li><strong>Timestamp:</strong> {timestamp_text}</li>
+              <li><strong>Started Time:</strong> {started_time_text}</li>
+              <li><strong>URL:</strong> <a href="{build_url_text}">{build_url_text}</a></li>
             </ul>
             <p>Please investigate the failed run immediately.</p>
           </body>

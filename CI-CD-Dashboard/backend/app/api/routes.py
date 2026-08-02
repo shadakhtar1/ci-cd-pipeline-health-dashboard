@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
+from app.mail.smtp_service import SMTPEmailService
 from app.models.build import Build
 from app.schemas.build import BuildCreate, BuildRead, BuildSummary, RefreshResponse
 from app.services.build_service import BuildService
@@ -51,3 +52,13 @@ async def get_build_logs(build_id: int, service: BuildService = Depends(get_buil
 @router.post("/refresh", response_model=RefreshResponse, status_code=status.HTTP_200_OK)
 async def refresh_builds(service: BuildService = Depends(get_build_service)) -> RefreshResponse:
     return service.refresh_builds()
+
+
+@router.post("/test-email", status_code=status.HTTP_200_OK)
+async def test_email() -> dict[str, str]:
+    try:
+        smtp_service = SMTPEmailService()
+        smtp_service.send_test_email()
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
+    return {"message": "Test email sent successfully"}

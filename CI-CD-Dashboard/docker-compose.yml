@@ -12,12 +12,13 @@ services:
     environment:
       PYTHONUNBUFFERED: "1"
       PORT: "8000"
+      DATABASE_URL: sqlite:///./data/app.db
     ports:
       - "8000:8000"
     networks:
       - ci-cd-network
     volumes:
-      - ci-cd-sqlite:/app
+      - ci-cd-sqlite:/app/data
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
       interval: 30s

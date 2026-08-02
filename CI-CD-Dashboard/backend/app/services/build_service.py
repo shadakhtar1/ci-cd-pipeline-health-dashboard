@@ -67,8 +67,9 @@ class BuildService:
         alerts_sent = 0
         for failed_build in sync_stats.get("failed_builds", []):
             try:
+                workflow_name = failed_build.get("workflow_name") or failed_build.get("pipeline_name") or "unknown"
                 if self.email_service.send_failure_alert(
-                    pipeline_name=failed_build.get("pipeline_name") or failed_build.get("workflow_name") or "unknown",
+                    pipeline_name=workflow_name,
                     build_number=failed_build.get("build_number") or 0,
                     branch=failed_build.get("branch"),
                     commit_sha=failed_build.get("commit_id"),
@@ -76,10 +77,16 @@ class BuildService:
                     duration=failed_build.get("duration"),
                     build_url=failed_build.get("build_url"),
                     timestamp=failed_build.get("completed_at") or failed_build.get("started_at"),
+                    repository=failed_build.get("repository"),
+                    workflow_name=workflow_name,
+                    started_at=failed_build.get("started_at"),
                 ):
                     alerts_sent += 1
             except Exception as exc:
-                logger.exception("Failed to deliver failure alert", extra={"error": str(exc), "build_number": failed_build.get("build_number")})
+                logger.exception(
+                    "Failed to deliver failure alert",
+                    extra={"error": str(exc), "build_number": failed_build.get("build_number")},
+                )
 
         logger.info("Completed refresh and alert processing", extra={"alerts_sent": alerts_sent})
         return RefreshResponse(

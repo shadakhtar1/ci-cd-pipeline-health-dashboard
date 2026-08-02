@@ -32,8 +32,10 @@ GITHUB_REPO=hello-world
 1. Change into the backend directory.
 2. Create and activate a virtual environment.
 3. Install dependencies from requirements.txt.
-4. Copy .env.example to .env and update the values.
+4. Copy .env.example to .env and update the values as needed.
 5. Run the application with uvicorn.
+
+Docker Compose expects the backend environment file at backend/.env. A local default file is included for development, but you should still review the values before using GitHub or SMTP features.
 
 ## Metrics Engine
 The dashboard metrics endpoint exposes the following values via GET /api/dashboard:
@@ -68,8 +70,8 @@ EMAIL_ALERTS_ENABLED=true
 ```
 
 ### Behavior
-- Email alerts are sent only for failed builds.
-- The message includes workflow name, branch, commit SHA, status, duration, build URL, and timestamp.
+- Email alerts are sent automatically for newly detected failed workflow runs during the GitHub refresh flow.
+- The message includes workflow name, repository, branch, status, started time, and GitHub Actions run URL.
 - Temporary SMTP failures are retried automatically before the process logs a warning and continues.
 - If email delivery fails, the refresh flow still completes without crashing.
 

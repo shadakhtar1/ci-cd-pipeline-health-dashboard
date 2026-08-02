@@ -142,6 +142,7 @@ class GitHubService:
 
         for run in runs:
             parsed = self.parse_run(run)
+            parsed["repository"] = f"{owner}/{repo}"
             existing = db.query(Build).filter(Build.build_number == parsed["build_number"]).first()
             should_notify_failure = False
 
@@ -164,7 +165,6 @@ class GitHubService:
                 inserted += 1
                 should_notify_failure = parsed["status"] == "failure"
             else:
-                previous_status = existing.status
                 existing.pipeline_name = parsed["pipeline_name"]
                 existing.workflow_name = parsed["workflow_name"]
                 existing.status = parsed["status"]
@@ -177,7 +177,6 @@ class GitHubService:
                 existing.completed_at = parsed["completed_at"]
                 existing.logs = parsed.get("logs_url")
                 updated += 1
-                should_notify_failure = previous_status != "failure" and parsed["status"] == "failure"
 
             if should_notify_failure:
                 failed_builds.append(parsed)
