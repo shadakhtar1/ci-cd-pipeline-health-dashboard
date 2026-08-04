@@ -11,6 +11,8 @@ resource "azurerm_linux_virtual_machine" "ci_dashboard_vm" {
     azurerm_network_interface.ci_dashboard_nic.id
   ]
 
+  depends_on = [azurerm_network_interface.ci_dashboard_nic]
+
   disable_password_authentication = true
 
   # Load the provisioning script through cloud-init custom data so it runs during VM creation.
@@ -28,8 +30,8 @@ resource "azurerm_linux_virtual_machine" "ci_dashboard_vm" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "ubuntu-24_04-lts"
-    sku       = "server"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
   }
 

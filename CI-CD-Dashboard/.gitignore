@@ -61,8 +61,9 @@ Thumbs.db
 .terraform/
 *.tfstate
 *.tfstate.*
-.terraform.lock.hcl
 crash.log
+*.tfvars
 
-# Sensitive files
-terraform.tfvars
+# Keep example files and root lockfile tracked
+!terraform.tfvars.example
+!/.terraform.lock.hcl

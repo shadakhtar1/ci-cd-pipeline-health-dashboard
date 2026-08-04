@@ -82,7 +82,7 @@ Trigger a refresh at POST /api/refresh. Any newly failed build will trigger an a
 Build and start the full stack with Docker Compose:
 
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 
 This starts:
@@ -94,6 +94,77 @@ The compose stack uses:
 - a named volume for SQLite persistence
 - restart policies for resilience
 - health checks for both services
+
+## Azure VM Deployment
+The infrastructure in the infra directory provisions an Ubuntu VM and runs the bootstrap script automatically during provisioning. The script will:
+
+1. Install Docker and Docker Compose.
+2. Add azureuser to the Docker group.
+3. Clone the repository into /opt/ci-cd-pipeline-health-dashboard/CI-CD-Dashboard.
+4. Set ownership of the repository to azureuser.
+5. Create backend/.env from backend/.env.example if it does not already exist.
+6. Start the stack with docker compose up --build -d.
+
+## Prerequisites
+- An Azure subscription.
+- Azure CLI logged in with an active account.
+- Terraform installed locally.
+- An SSH public key for the VM.
+
+## Azure Login
+```bash
+az login
+```
+
+## Terraform Workflow
+From the infra directory:
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+## SSH Access
+Once the VM is provisioned, connect with:
+
+```bash
+ssh azureuser@<public-ip>
+```
+
+## Deployment Flow
+After terraform apply completes, the following should happen automatically:
+- Azure infrastructure is provisioned.
+- The VM is created.
+- Docker and Docker Compose are installed.
+- The repository is cloned and configured.
+- backend/.env is created from the example file if needed.
+- Docker images are built and the stack starts.
+- Backend health is verified before the deployment script exits.
+
+## Troubleshooting
+- If the backend does not start, verify that backend/.env exists and contains the expected values.
+- Check container status with:
+
+```bash
+docker compose ps
+```
+
+- Review logs with:
+
+```bash
+docker compose logs backend
+```
+
+- Verify the VM security rules allow inbound traffic on ports 22, 80, 443, 3000, and 8000.
+- Review the provisioning log at /var/log/deployment.log on the VM.
+
+## Destroy
+To remove all Azure resources:
+
+```bash
+terraform destroy
+```
 
 ## Notes
 - The GitHub integration is intentionally isolated in the backend service layer.

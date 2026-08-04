@@ -6,7 +6,7 @@ terraform {
     # Azure Resource Manager provider for creating Azure resources.
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.0"
+      version = "4.81.0"
     }
   }
 }
@@ -15,4 +15,6 @@ terraform {
 # The features block is required for the provider to function correctly.
 provider "azurerm" {
   features {}
+
+  resource_provider_registrations = "none"
 }

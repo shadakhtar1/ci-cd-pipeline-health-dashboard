@@ -1,0 +1,7 @@
+# Example Terraform variable values for the CI-CD Dashboard Azure deployment.
+resource_group_name = "rg-ci-dashboard"
+location            = "westus2"
+vm_name             = "ci-dashboard-vm"
+vm_size             = "Standard_B2s_v2"
+admin_username      = "azureuser"
+ssh_public_key      = "ssh-rsa YOUR_PUBLIC_SSH_KEY_HERE"

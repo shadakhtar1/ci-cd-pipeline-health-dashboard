@@ -37,7 +37,7 @@ variable "vm_name" {
 variable "vm_size" {
   description = "Azure VM size to use for the compute instance."
   type        = string
-  default     = "Standard_B1s"
+  default     = "Standard_B2s_v2"
 
   validation {
     condition     = length(trimspace(var.vm_size)) > 0
@@ -61,4 +61,9 @@ variable "ssh_public_key" {
   type        = string
   default     = ""
   sensitive   = true
+
+  validation {
+    condition     = length(trimspace(var.ssh_public_key)) > 0
+    error_message = "ssh_public_key must be provided and cannot be empty."
+  }
 }
