@@ -58,23 +58,35 @@ fi
 
 # Clone the application repository if it is not already present.
 REPO_ROOT="/opt/ci-cd-pipeline-health-dashboard"
-REPO_PATH="$REPO_ROOT/CI-CD-Dashboard"
-if [ ! -d "$REPO_PATH/.git" ]; then
-  rm -rf "$REPO_PATH"
-  git clone https://github.com/shadakhtar1/ci-cd-pipeline-health-dashboard.git "$REPO_PATH"
-  log "Cloned repository into $REPO_PATH"
+if [ ! -d "$REPO_ROOT/.git" ]; then
+  rm -rf "$REPO_ROOT"
+  git clone https://github.com/shadakhtar1/ci-cd-pipeline-health-dashboard.git "$REPO_ROOT"
+  log "Cloned repository into $REPO_ROOT"
 else
   log "Repository already exists; syncing repository"
-  git -C "$REPO_PATH" fetch origin --prune || {
+  git -C "$REPO_ROOT" fetch origin --prune || {
     log "Git fetch failed"
     exit 1
   }
-  if ! git -C "$REPO_PATH" reset --hard origin/main >/dev/null 2>&1; then
-    if ! git -C "$REPO_PATH" reset --hard origin/master >/dev/null 2>&1; then
+  if ! git -C "$REPO_ROOT" reset --hard origin/main >/dev/null 2>&1; then
+    if ! git -C "$REPO_ROOT" reset --hard origin/master >/dev/null 2>&1; then
       log "Failed to reset repository to origin/main or origin/master"
       exit 1
     fi
   fi
+fi
+
+# Detect where the compose project lives inside the repository.
+PROJECT_DIR=""
+if [ -f "$REPO_ROOT/docker-compose.yml" ]; then
+  PROJECT_DIR="$REPO_ROOT"
+elif [ -f "$REPO_ROOT/CI-CD-Dashboard/docker-compose.yml" ]; then
+  PROJECT_DIR="$REPO_ROOT/CI-CD-Dashboard"
+fi
+
+if [ -z "$PROJECT_DIR" ]; then
+  log "Could not locate docker-compose.yml in the repository root or CI-CD-Dashboard subdirectory"
+  exit 1
 fi
 
 # Ensure the cloned repository is owned by the deployment user.
@@ -83,8 +95,9 @@ if [ "$ADMIN_USERNAME" != "root" ] && id "$ADMIN_USERNAME" >/dev/null 2>&1; then
   log "Set ownership of the repository to $ADMIN_USERNAME"
 fi
 
-# Change into the project directory and update it in place.
-cd "$REPO_PATH"
+# Change into the detected project directory.
+cd "$PROJECT_DIR"
+log "Using project directory: $PROJECT_DIR"
 
 # Ensure the backend environment file exists before Docker Compose starts.
 if [ ! -f backend/.env ] && [ -f backend/.env.example ]; then
