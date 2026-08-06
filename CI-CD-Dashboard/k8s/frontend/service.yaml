@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ci-cd-frontend
+  namespace: ci-cd-dashboard
+  labels:
+    app: ci-cd-frontend
+    component: frontend
+spec:
+  selector:
+    app: ci-cd-frontend
+    component: frontend
+  ports:
+    - port: 3000
+      targetPort: http
+      protocol: TCP
+      name: http
+  type: ClusterIP

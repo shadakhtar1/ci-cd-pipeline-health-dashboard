@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ci-cd-dashboard-ingress
+  namespace: ci-cd-dashboard
+spec:
+  rules:
+    - host: ci-cd-dashboard.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ci-cd-frontend
+                port:
+                  number: 3000
