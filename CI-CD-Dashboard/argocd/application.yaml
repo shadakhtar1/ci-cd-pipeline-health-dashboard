@@ -19,7 +19,7 @@ spec:
     # Use the current development branch for this assignment milestone.
     targetRevision: assignment-3
     # The directory inside the repository that contains the manifests to deploy.
-    path: k8s
+    path: CI-CD-Dashboard/k8s
     # The directory where Argo CD should render the manifests before applying them.
     directory:
       recurse: true
