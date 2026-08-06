@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ci-cd-frontend:latest
+          image: ci-cd-dashboard-frontend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000

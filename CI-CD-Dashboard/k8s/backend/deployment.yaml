@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ci-cd-backend:latest
+          image: ci-cd-dashboard-backend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
