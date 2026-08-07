@@ -50,6 +50,9 @@ logs/
 # Docker
 .docker/
 
+# AI observer artifacts
+ai-observer/reports/
+
 # VS Code
 .vscode/
 

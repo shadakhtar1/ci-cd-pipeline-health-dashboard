@@ -82,19 +82,169 @@ CI-CD-Dashboard/
 └── .gitignore
 ```
 
-## Architecture
+## Architecture Overview
 ```mermaid
 graph TD
-  Developer -->|runs| Terraform
-  Terraform --> Azure
-  Azure --> AzureVM[Azure VM]
-  AzureVM -->|executes| cloudinit[cloud-init]
-  cloudinit --> Docker
-  Docker --> Backend
-  Docker --> Frontend
+  Developer -->|pushes| GitHub
+  GitHub --> ArgoCD
+  ArgoCD --> Kubernetes
+  Kubernetes --> Backend
+  Kubernetes --> Frontend
   Backend --> SQLite
   Frontend --> Backend
+  Kubernetes --> Observer
+  Observer --> LogCollector
+  Observer --> LLMAnalyzer
+  LLMAnalyzer --> RemediationEngine
+  LLMAnalyzer --> ReportGenerator
+  ReportGenerator --> NotificationService
 ```
+
+## Component Descriptions
+- Backend: FastAPI service that exposes dashboard and health endpoints.
+- Frontend: React/Vite UI served by Nginx.
+- Kubernetes manifests: Deploy the app to Minikube or a cluster.
+- Argo CD Application: Syncs the Kubernetes manifests from Git.
+- AI Observer: Watches the cluster for failed pods and triggers analysis.
+- Log Collector: Retrieves pod logs and warning events.
+- LLM Analyzer: Produces RCA and remediation recommendations.
+- Remediation Engine: Executes safe, predefined Kubernetes actions.
+- Report Generator: Writes Markdown incident reports.
+- Notification Service: Sends incident emails with optional attachments.
+
+## Setup Instructions
+1. Clone the repository.
+2. Install Docker, Docker Compose, Python 3.10+, and optionally Minikube/kubectl.
+3. Copy the backend environment file:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+4. Copy the observer environment file:
+
+```bash
+cp ai-observer/.env.example ai-observer/.env
+```
+
+5. Fill in the required values in both `.env` files.
+
+## Running Locally
+```bash
+docker compose up --build -d
+```
+
+Verify:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8000
+- Swagger docs: http://localhost:8000/docs
+
+## Running on Minikube
+The repository includes Kubernetes manifests in the `k8s/` directory for local Minikube deployment.
+
+### Build images
+```bash
+docker build -t ci-cd-backend:latest ./backend
+docker build -t ci-cd-frontend:latest ./frontend
+```
+
+### Load images into Minikube (if needed)
+```bash
+minikube image load ci-cd-backend:latest
+minikube image load ci-cd-frontend:latest
+```
+
+### Deploy manifests
+```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/storage/pvc.yaml
+kubectl apply -f k8s/backend/configmap.yaml
+kubectl apply -f k8s/backend/deployment.yaml
+kubectl apply -f k8s/backend/service.yaml
+kubectl apply -f k8s/frontend/deployment.yaml
+kubectl apply -f k8s/frontend/service.yaml
+kubectl apply -f k8s/frontend/ingress.yaml
+```
+
+## Running with Argo CD
+1. Ensure Argo CD is installed and accessible.
+2. Apply the application manifest:
+
+```bash
+kubectl apply -f argocd/application.yaml
+```
+
+3. Sync the application from the Argo CD UI or CLI.
+
+## AI Workflow Diagram
+```mermaid
+flowchart LR
+    Observer --> LogCollector
+    LogCollector --> LLMAnalyzer
+    LLMAnalyzer --> RemediationEngine
+    LLMAnalyzer --> ReportGenerator
+    ReportGenerator --> NotificationService
+```
+
+## Demo Workflow
+1. Deploy the application locally or on Minikube.
+2. Trigger a pod failure scenario.
+3. The observer detects the failure, collects logs and events, analyzes the issue, optionally remediates it, writes a Markdown report, and sends an email notification.
+
+## Example Incident Report
+```markdown
+# AI Incident Report
+
+## Incident Details
+- Timestamp: 2026-08-08T12:00:00
+- Namespace: ci-cd-dashboard
+- Pod: ci-cd-backend-abc123
+
+## AI Summary
+- Summary: The backend pod restarted due to an image pull failure.
+- Root Cause: The referenced container image could not be pulled.
+- Severity: High
+```
+
+## Environment Variables
+### Backend
+- `APP_NAME`
+- `APP_VERSION`
+- `DEBUG`
+- `ENVIRONMENT`
+- `DATABASE_URL`
+- `LOG_LEVEL`
+- `GITHUB_TOKEN`
+- `GITHUB_OWNER`
+- `GITHUB_REPO`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USERNAME`
+- `SMTP_PASSWORD`
+- `FROM_EMAIL`
+- `TO_EMAIL`
+- `SMTP_RECIPIENTS`
+- `EMAIL_ALERTS_ENABLED`
+
+### AI Observer
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USERNAME`
+- `SMTP_PASSWORD`
+- `EMAIL_FROM`
+- `EMAIL_TO`
+- `OBS_NAMESPACE`
+- `CLUSTER_CONTEXT`
+- `LOG_TAIL_LINES`
+
+## Troubleshooting
+- Verify `kubectl cluster-info` when using Kubernetes.
+- Confirm `.env` values are populated before running the backend or observer.
+- Verify Docker Desktop or Docker Engine is running.
+- Check container logs with `docker compose logs backend` or `kubectl logs`.
+- Review generated reports under `ai-observer/reports/` when available.
 
 ## Deployment Workflow
 ```mermaid
@@ -236,6 +386,59 @@ http://<VM-PUBLIC-IP>:8000/api/health
 
 ## Minikube Deployment
 The repository now includes Kubernetes manifests under the `k8s/` directory for local Minikube deployment.
+
+## AI Observer
+The repository also includes an AI-native observer under `ai-observer/` for Kubernetes incident detection, diagnostics, LLM-based RCA generation, safe remediation, report generation, and email notification.
+
+### AI Workflow
+```mermaid
+flowchart LR
+    Observer --> LogCollector
+    LogCollector --> LLMAnalyzer
+    LLMAnalyzer --> RemediationEngine
+    LLMAnalyzer --> ReportGenerator
+    ReportGenerator --> NotificationService
+```
+
+### AI Observer Setup
+1. Create and activate a virtual environment.
+2. Install dependencies:
+
+```bash
+pip install -r ai-observer/requirements.txt
+```
+
+3. Copy the example environment file:
+
+```bash
+cp ai-observer/.env.example ai-observer/.env
+```
+
+4. Run the observer:
+
+```bash
+python ai-observer/observer.py
+```
+
+### AI Observer Environment Variables
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USERNAME`
+- `SMTP_PASSWORD`
+- `EMAIL_FROM`
+- `EMAIL_TO`
+
+### Demo Workflow
+1. Deploy the application to Kubernetes or Minikube.
+2. Trigger a pod failure scenario.
+3. The observer detects the failure, collects logs, analyzes the issue, optionally remediates it, writes a Markdown report, and sends an email notification.
+
+### Troubleshooting
+- Verify `kubectl` access with `kubectl cluster-info`.
+- Confirm the Python dependencies are installed.
+- Confirm `.env` values are populated before running the observer.
 
 ### Prerequisites
 - Minikube installed

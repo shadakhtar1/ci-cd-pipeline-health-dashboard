@@ -1,0 +1,6 @@
+kubernetes
+openai
+pyyaml
+requests
+python-dotenv
+rich
